@@ -34,7 +34,7 @@ public interface UserService
      * @param id The primary key (long) of the user you seek.
      * @return The given User or throws an exception if not found.
      */
-    User findUserById(long id);
+    User findUserById(long id) throws ResourceNotFoundException;
 
     /**
      * Returns the user with the given name

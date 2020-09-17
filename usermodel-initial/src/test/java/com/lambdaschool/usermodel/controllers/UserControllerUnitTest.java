@@ -1,5 +1,6 @@
 package com.lambdaschool.usermodel.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lambdaschool.usermodel.models.Role;
 import com.lambdaschool.usermodel.models.User;
 import com.lambdaschool.usermodel.models.UserRoles;
@@ -11,15 +12,25 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -142,23 +153,111 @@ public class UserControllerUnitTest {
     }
 
     @Test
-    public void listAllUsers() {
+    public void a_listAllUsers() throws Exception {
+        String apiURL = "/users/users";
+        Mockito.when(userService.findAll()).thenReturn(userList);
+
+        RequestBuilder rb = MockMvcRequestBuilders.get(apiURL).accept(MediaType.APPLICATION_JSON);
+        MvcResult r = mockMvc.perform(rb).andReturn();
+
+        String actualResult = r.getResponse().getContentAsString();
+
+        ObjectMapper mapper = new ObjectMapper();
+        String expectedResult = mapper.writeValueAsString(userList);
+
+        assertEquals(expectedResult, actualResult);
     }
 
     @Test
-    public void getUserById() {
+    public void b_getUserById() throws Exception {
+        String apiURL = "/users/user/20";
+        Mockito.when(userService.findUserById(20)).thenReturn(userList.get(1));
+
+        RequestBuilder rb = MockMvcRequestBuilders.get(apiURL).accept(MediaType.APPLICATION_JSON);
+        MvcResult r = mockMvc.perform(rb).andReturn();
+
+        String actualResult = r.getResponse().getContentAsString();
+
+        ObjectMapper mapper = new ObjectMapper();
+        String expectedResult = mapper.writeValueAsString(userList.get(1));
+
+        assertEquals(expectedResult, actualResult);
     }
 
     @Test
-    public void getUserByName() {
+    public void bb_getUserByIdNotFound() throws Exception {
+        String apiURL = "/users/user/999999";
+        Mockito.when(userService.findUserById(999999)).thenReturn(null);
+
+        RequestBuilder rb = MockMvcRequestBuilders.get(apiURL).accept(MediaType.APPLICATION_JSON);
+        MvcResult r = mockMvc.perform(rb).andReturn();
+
+        String actualResult = r.getResponse().getContentAsString();
+
+        ObjectMapper mapper = new ObjectMapper();
+        String expectedResult = "";
+
+        assertEquals(expectedResult, actualResult);
     }
 
     @Test
-    public void getUserLikeName() {
+    public void getUserByName() throws Exception {
+        String apiURL = "/users/user/name/cinnamonTEST";
+        Mockito.when(userService.findByName("cinnamonTEST")).thenReturn(userList.get(1));
+
+        RequestBuilder rb = MockMvcRequestBuilders.get(apiURL).accept(MediaType.APPLICATION_JSON);
+        MvcResult r = mockMvc.perform(rb).andReturn();
+
+        String actualResult = r.getResponse().getContentAsString();
+
+        ObjectMapper mapper = new ObjectMapper();
+        String expectedResult = mapper.writeValueAsString(userList.get(1));
+
+        assertEquals(expectedResult, actualResult);
     }
 
     @Test
-    public void addNewUser() {
+    public void getUserLikeName() throws Exception {
+        String apiURL = "/users/user/name/like/cinn";
+        Mockito.when(userService.findByNameContaining("cinn")).thenReturn(userList);
+
+        RequestBuilder rb = MockMvcRequestBuilders.get(apiURL).accept(MediaType.APPLICATION_JSON);
+        MvcResult r = mockMvc.perform(rb).andReturn();
+
+        String actualResult = r.getResponse().getContentAsString();
+
+        ObjectMapper mapper = new ObjectMapper();
+        String expectedResult = mapper.writeValueAsString(userList);
+
+        assertEquals(expectedResult, actualResult);
+    }
+
+    @Test
+    public void addNewUser() throws Exception {
+        String apiURL = "/users/user";
+
+        User u6 = new User("bugsTEST",
+                "password",
+                "bugsTEST@school.lambda");
+        u6.setUserid(60);
+
+        Role r2 = new Role("usertest");
+        r2.setRoleid(2);
+
+        u6.getRoles()
+                .add(new UserRoles(u6, r2));
+
+        ObjectMapper mapper = new ObjectMapper();
+        String restaurantString = mapper.writeValueAsString(u6);
+
+        Mockito.when(userService.save(any(User.class))).thenReturn(u6);
+
+        RequestBuilder rb =
+                MockMvcRequestBuilders.post(apiURL).accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(restaurantString);
+
+        mockMvc.perform(rb).andExpect(status().isCreated()).andDo(MockMvcResultHandlers.print());
     }
 
     @Test
@@ -170,6 +269,13 @@ public class UserControllerUnitTest {
     }
 
     @Test
-    public void deleteUserById() {
+    public void deleteUserById() throws Exception {
+        String apiURL = "/users/user/20";
+
+        Mockito.doNothing().when(userService).delete(20);
+
+        RequestBuilder rb = MockMvcRequestBuilders.delete(apiURL);
+
+        mockMvc.perform(rb).andExpect(status().isOk()).andDo(MockMvcResultHandlers.print());
     }
 }

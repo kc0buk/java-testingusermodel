@@ -91,10 +91,10 @@ public class UserServiceImplUnitTest {
 
     @Test
     public void ee_savePut() {
-        String u4Name = "bugsbunnytest";
-        User u4 = new User("bugsbunnyTEST",
+        String u4Name = "bugsbunytest";
+        User u4 = new User("bugsbunyTEST",
                 "password",
-                "bugsbunnyTEST@school.lambda");
+                "bugsbuny22TEST@school.lambda");
         u4.setUserid(13);
         Role role = new Role("turtle");
         role.setRoleid(3);
@@ -127,7 +127,13 @@ public class UserServiceImplUnitTest {
     @Test
     public void g_delete() {
         userService.delete(13);
-        assertEquals(4, userService.findAll().size());
+        assertEquals(5, userService.findAll().size());
+    }
+
+    @Test(expected = ResourceNotFoundException.class)
+    public void gg_deleteUserNotFound() {
+        userService.delete(9999999);
+        assertEquals(5, userService.findAll().size());
     }
 
     @Test
